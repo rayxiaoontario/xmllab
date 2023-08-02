@@ -6,16 +6,17 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class XmlValidator {
   public static void main(String[] args) {
-    if (args.length != 2) {
-      System.err.println("Usage: XmlValidator <xml_file> <dtd_file>");
+    if (args.length != 1) {
+      System.err.println("Usage: XmlValidator <xml_file>");
       System.exit(1);
     }
 
     String xmlFile = args[0];
-    String dtdFile = args[1];
 
     try {
       // Enable validation
@@ -25,44 +26,42 @@ public class XmlValidator {
       // Get a new instance of parser
       SAXParser saxParser = spf.newSAXParser();
 
-      // Set the XMLReader's DTD handling properties
-      XMLReader xmlReader = saxParser.getXMLReader();
-      xmlReader.setEntityResolver(new EntityResolver() {
-        @Override
-        public InputSource resolveEntity(String publicId, String systemId) {
-          if (systemId.endsWith(".dtd")) {
-            return new InputSource(dtdFile);
-          } else {
-            return null;
-          }
-        }
-      });
-
       // Define an error handler to catch any problems during parsing
-      xmlReader.setErrorHandler(new ErrorHandler() {
+      DefaultHandler handler = new DefaultHandler() {
+        private List<SAXParseException> errors = new ArrayList<>();
+
         @Override
         public void warning(SAXParseException e) throws SAXException {
-          throw e; // Throwing exception on warnings to make validation strict
+          errors.add(e);
         }
 
         @Override
         public void error(SAXParseException e) throws SAXException {
-          throw e;
+          errors.add(e);
         }
 
         @Override
         public void fatalError(SAXParseException e) throws SAXException {
-          throw e;
+          errors.add(e);
         }
-      });
+
+        @Override
+        public void endDocument() throws SAXException {
+          if (!errors.isEmpty()) {
+            System.out.println("Validation failed with " + errors.size() + " error(s):");
+            errors.forEach(e -> System.out.println(e.getMessage()));
+            System.exit(1);
+          }
+        }
+      };
 
       // Parse the document to validate
-      xmlReader.parse(new InputSource(xmlFile));
+      saxParser.parse(new File(xmlFile), handler);
 
       System.out.println("Validation successful!");
 
     } catch (Exception e) {
-      System.out.println("Validation failed: " + e.getMessage());
+      System.out.println("An unexpected error occurred: " + e.getMessage());
       System.exit(1);
     }
   }
