@@ -1,22 +1,45 @@
 package com.xmllab.validator;
 
+import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class XmlValidator {
   public static void main(String[] args) {
     if (args.length != 1) {
-      System.err.println("Usage: XmlValidator <xml_file>");
+      System.err.println("Usage: XmlValidator <dir_path>");
       System.exit(1);
     }
 
-    String xmlFile = args[0];
+    File directory = new File(args[0]);
+
+    if (!directory.exists() || !directory.isDirectory()) {
+      System.err.println("Invalid directory path: " + args[0]);
+      System.exit(1);
+    }
+
+    processDirectory(directory);
+  }
+
+  private static void processDirectory(File directory) {
+    for (File file : directory.listFiles()) {
+      if (file.isDirectory()) {
+        processDirectory(file);
+      } else if (file.getName().endsWith(".xml")) {
+        validateXmlFile(file);
+      }
+    }
+  }
+
+  private static void validateXmlFile(File xmlFile) {
+    System.out.println("Processing file: " + xmlFile.getAbsolutePath());
 
     try {
       // Enable validation
@@ -31,38 +54,36 @@ public class XmlValidator {
         private List<SAXParseException> errors = new ArrayList<>();
 
         @Override
-        public void warning(SAXParseException e) throws SAXException {
+        public void warning(SAXParseException e) {
           errors.add(e);
         }
 
         @Override
-        public void error(SAXParseException e) throws SAXException {
+        public void error(SAXParseException e) {
           errors.add(e);
         }
 
         @Override
-        public void fatalError(SAXParseException e) throws SAXException {
+        public void fatalError(SAXParseException e) {
           errors.add(e);
         }
 
         @Override
-        public void endDocument() throws SAXException {
+        public void endDocument() {
           if (!errors.isEmpty()) {
             System.out.println("Validation failed with " + errors.size() + " error(s):");
             errors.forEach(e -> System.out.println(e.getMessage()));
-            System.exit(1);
+          } else {
+            System.out.println("Validation successful!");
           }
         }
       };
 
       // Parse the document to validate
-      saxParser.parse(new File(xmlFile), handler);
+      saxParser.parse(xmlFile, handler);
 
-      System.out.println("Validation successful!");
-
-    } catch (Exception e) {
+    } catch (SAXException | IOException | ParserConfigurationException e) {
       System.out.println("An unexpected error occurred: " + e.getMessage());
-      System.exit(1);
     }
   }
 }
