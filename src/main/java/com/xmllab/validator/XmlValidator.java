@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
@@ -19,6 +21,10 @@ public class XmlValidator {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static String outputFormat = "html";
+  private static final String HTML_REPORT_FILE = "report.html";
+  private static final String JSON_REPORT_FILE = "report.json";
+
+  private static final List<ObjectNode> validationResults = new ArrayList<>();
 
   public static void main(String[] args) {
     if (args.length < 1 || args.length > 2) {
@@ -52,9 +58,12 @@ public class XmlValidator {
         validateXmlFile(file);
       }
     }
+    generateReport();
   }
 
   private static void validateXmlFile(File xmlFile) {
+    System.out.println("Processing file: " + xmlFile.getAbsolutePath());
+
     List<String> errors = new ArrayList<>();
     try {
       // Enable validation
@@ -100,19 +109,19 @@ public class XmlValidator {
       errors.forEach(errorsNode::add);
       result.set("errors", errorsNode);
     }
+    validationResults.add(result);
 
-    try {
-      if (outputFormat.equals("json")) {
-        String jsonOutput = objectMapper.writerWithDefaultPrettyPrinter()
-            .writeValueAsString(result);
-        System.out.println(jsonOutput);
-      } else {
-        String htmlOutput = createHtmlOutput(objectMapper.readTree(result.toString()));
-        System.out.println(htmlOutput);
-      }
-    } catch (Exception e) {
-      System.out.println("Error creating output: " + e.getMessage());
-    }
+//    try {
+//      if (outputFormat.equals("json")) {
+//        String jsonOutput = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+//        Files.write(Paths.get(REPORT_FILE), jsonOutput.getBytes());
+//      } else {
+//        String htmlOutput = createHtmlOutput(objectMapper.readTree(result.toString()));
+//        Files.write(Paths.get(REPORT_FILE), htmlOutput.getBytes());
+//      }
+//    } catch (Exception e) {
+//      System.out.println("Error creating output: " + e.getMessage());
+//    }
 
 
   }
@@ -120,7 +129,11 @@ public class XmlValidator {
   private static String createHtmlOutput(JsonNode jsonNode) {
     StringBuilder html = new StringBuilder();
 
-    html.append("<details><summary>").append(jsonNode.get("name").asText()).append("</summary>");
+    String bgColor = jsonNode.get("status").asText().equals("failed") ? "red" : "green";
+
+    html.append("<details><summary><a href=\"file:///").append(jsonNode.get("name").asText())
+        .append("\" style=\"color:").append(bgColor).append(";\">")
+        .append(jsonNode.get("name").asText()).append("</a></summary>");
     html.append("<p>Status: ").append(jsonNode.get("status").asText()).append("</p>");
 
     if (jsonNode.get("status").asText().equals("failed")) {
@@ -137,4 +150,24 @@ public class XmlValidator {
 
     return html.toString();
   }
+
+
+  private static void generateReport() {
+    try {
+      if (outputFormat.equals("json")) {
+        ArrayNode arrayNode = objectMapper.valueToTree(validationResults);
+        String jsonOutput = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(arrayNode);
+        Files.write(Paths.get(JSON_REPORT_FILE), jsonOutput.getBytes());
+      } else {
+        StringBuilder htmlOutput = new StringBuilder();
+        for (ObjectNode result : validationResults) {
+          htmlOutput.append(createHtmlOutput(objectMapper.readTree(result.toString())));
+        }
+        Files.write(Paths.get(HTML_REPORT_FILE), htmlOutput.toString().getBytes());
+      }
+    } catch (Exception e) {
+      System.out.println("Error creating output: " + e.getMessage());
+    }
+  }
+
 }
