@@ -134,16 +134,16 @@ public class XmlValidator {
     html.append("<details><summary><a href=\"file:///").append(jsonNode.get("name").asText())
         .append("\" style=\"color:").append(bgColor).append(";\">")
         .append(jsonNode.get("name").asText()).append("</a></summary>");
-    html.append("<p>Status: ").append(jsonNode.get("status").asText()).append("</p>");
+   // html.append("<p>Status: ").append(jsonNode.get("status").asText()).append("</p>");
 
     if (jsonNode.get("status").asText().equals("failed")) {
-      html.append("<details><summary>Errors</summary><ul>");
+      html.append("<ul>");
 
       for (JsonNode error : jsonNode.get("errors")) {
         html.append("<li>").append(error.asText()).append("</li>");
       }
 
-      html.append("</ul></details>");
+      html.append("</ul>");
     }
 
     html.append("</details>");
