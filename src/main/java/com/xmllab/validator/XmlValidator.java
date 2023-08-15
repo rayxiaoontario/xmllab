@@ -16,6 +16,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
+import org.springframework.web.util.HtmlUtils;
 
 public class XmlValidator {
 
@@ -77,25 +78,23 @@ public class XmlValidator {
       DefaultHandler handler = new DefaultHandler() {
         @Override
         public void warning(SAXParseException e) {
-          errors.add(e.getMessage());
+          errors.add("Error at line " + e.getLineNumber() + " Error:" + HtmlUtils.htmlEscape(e.getMessage()));
         }
 
         @Override
         public void error(SAXParseException e) {
-          errors.add(e.getMessage());
+          errors.add("Error at line " + e.getLineNumber() + " Error:" + HtmlUtils.htmlEscape(e.getMessage()));
         }
 
         @Override
         public void fatalError(SAXParseException e) {
-          errors.add(e.getMessage());
+          errors.add("Error at line " + e.getLineNumber() + " Error:" + HtmlUtils.htmlEscape(e.getMessage()));
         }
       };
 
       // Parse the document to validate
       saxParser.parse(xmlFile, handler);
 
-    } catch (SAXParseException  e) {
-      errors.add("Error at line " + e.getLineNumber() + " Error:" + e.getMessage());
     } catch(SAXException| IOException | ParserConfigurationException ex) {
       errors.add(ex.getMessage());
     }
