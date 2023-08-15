@@ -128,13 +128,13 @@ public class XmlValidator {
   }
 
   private static String createHtmlOutput(JsonNode jsonNode) {
-    StringBuilder html = new StringBuilder();
+    StringBuilder html = new StringBuilder("<b>Xml files found in target folder</b> <br/>Click on the left arrow to show the detail of the error list.");
 
     String bgColor = jsonNode.get("status").asText().equals("failed") ? "red" : "green";
 
-    html.append("<details><summary><a href=\"file:///").append(jsonNode.get("name").asText())
+    html.append("<details><summary>").append(jsonNode.get("name").asText())
         .append("\" style=\"color:").append(bgColor).append(";\">")
-        .append(jsonNode.get("name").asText()).append("</a></summary>");
+        .append(jsonNode.get("name").asText()).append("</summary>");
    // html.append("<p>Status: ").append(jsonNode.get("status").asText()).append("</p>");
 
     if (jsonNode.get("status").asText().equals("failed")) {
