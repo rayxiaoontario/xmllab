@@ -141,7 +141,7 @@ public class XmlValidator {
       html.append("<ul>");
 
       for (JsonNode error : jsonNode.get("errors")) {
-        html.append("<li>").append(error.asText()).append("</li>");
+        html.append("<li>").append(error.asText()).append("</li>\n");
       }
 
       html.append("</ul>");
