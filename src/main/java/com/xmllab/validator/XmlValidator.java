@@ -94,8 +94,10 @@ public class XmlValidator {
       // Parse the document to validate
       saxParser.parse(xmlFile, handler);
 
-    } catch (SAXException | IOException | ParserConfigurationException e) {
-      errors.add(e.getMessage());
+    } catch (SAXParseException  e) {
+      errors.add("Error at line " + e.getLineNumber() + " Error:" + e.getMessage());
+    } catch(SAXException| IOException | ParserConfigurationException ex) {
+      errors.add(ex.getMessage());
     }
 
     ObjectNode result = objectMapper.createObjectNode();
